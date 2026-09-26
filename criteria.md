@@ -44,19 +44,10 @@ Given a query that matches no listings, the agent stops before calling
 
 ## 3. Something about state
 
-<!-- YOU WRITE THIS ONE.
-
-     How would you know that the item your search found is the same item the
-     next tool received? Name something countable or observable.
-
-     This is the criterion people find hardest, because state failure doesn't
-     look like state failure — it looks like a tool problem. Something that
-     compares session["selected_item"] against what actually reached
-     suggest_outfit is the shape you're after. -->
-
-
+When the search succeeds, the item in `session["selected_item"]["id"]` is the same one passed into `suggest_outfit`, and this remains true in 5 of 5 tries.
 
 **Why this target:**
+I picked 5 of 5 here because the branch logic is the thing being tested, and the session is the single source of truth. The state bug is easy to miss because the model can still produce a believable outfit even when the wrong item reached the next tool, so the session comparison is the countable proof that the loop passed the right object through.
 
 
 
@@ -64,20 +55,10 @@ Given a query that matches no listings, the agent stops before calling
 
 ## 4. Something about the fit card
 
-<!-- YOU WRITE THIS ONE.
-
-     The fit card calls a model, so the same input can produce different words
-     each time. That's not a bug — it's the nature of the tool. So what would
-     make it acceptable?
-
-     Think about what you'd actually be unhappy to see. A caption that never
-     mentions the price? Two different items producing the same opening
-     sentence? A card longer than a caption anyone would post? Any of those can
-     be turned into a number. -->
-
-
+For 5 different matching items, each fit card is 2 to 4 sentences long, mentions the item title, price, and platform at least once, and is different enough from the others that the opening sentence is not the same in all 5 tries.
 
 **Why this target:**
+I am not expecting perfect model creativity, only that the card behaves like a real caption. Requiring a price and platform keeps it from becoming a template, while allowing a little variation acknowledges that model output is naturally non-deterministic.
 
 
 
@@ -85,16 +66,10 @@ Given a query that matches no listings, the agent stops before calling
 
 ## 5. Your choice
 
-<!-- YOU WRITE THIS ONE TOO.
-
-     Pick something you actually care about getting right. Speed, the empty
-     wardrobe path, what happens when the model can't be reached, whether the
-     search respects a price ceiling — anything, as long as it names a number
-     or an observable outcome. -->
-
-
+When the wardrobe is empty, the agent still completes the run and returns a fit card in at least 4 of 5 tries without crashing or leaving the session in an error state.
 
 **Why this target:**
+This matters because a new user with no saved wardrobe is a normal early-user state, and the rubric explicitly calls out the empty-wardrobe failure mode. I chose 4 of 5 instead of 5 of 5 because the model still has to invent general styling advice that fits the item, so a perfect score is stricter than the branch logic itself.
 
 
 

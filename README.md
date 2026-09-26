@@ -39,123 +39,93 @@
 
 ## What This Does
 
-<!-- Three or four sentences: what a user asks for, and what they get back. -->
-
-
+FitFindr is a small thrift-finding agent that turns a shopping query into a recommendation loop. A user asks for an item like “vintage graphic tee under $30,” the agent searches the listing dataset, picks the strongest match, suggests an outfit using the wardrobe, and writes a short fit-card caption. The app is designed to stop early on impossible searches and preserve the session state across each tool call.
 
 ---
 
 ## Tool Inventory
 
-<!-- Four lines per tool. This is worth 2 points and it's the single most
-     common place students lose them.
-
-     "Returns a list" earns NOTHING. The description has to say what is IN
-     the list.
-
-     The empty case isn't optional either — it's the thing your loop branches
-     on, and if you don't decide it here you'll discover it as a crash in
-     Milestone 5. -->
-
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Searches the listings dataset for the closest item match based on keywords, optional size, and optional price ceiling.
+- **Inputs:** `description` (str), `size` (str | None), `max_price` (float | None)
+- **Returns:** A list of matching listing dicts, ordered by relevance and each containing fields like `id`, `title`, `description`, `category`, `style_tags`, `size`, `condition`, `price`, `colors`, `brand`, and `platform`.
+- **When it has nothing:** Returns an empty list `[]` when no listings match.
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Uses the selected listing and the user’s wardrobe to suggest an outfit that fits the item and the clothes the user already owns.
+- **Inputs:** `new_item` (dict), `wardrobe` (dict)
+- **Returns:** A non-empty string with one or two outfit suggestions, either tailored to the wardrobe or written as general styling advice if the wardrobe is empty.
+- **When it has nothing:** Returns a fallback styling string rather than an empty string, so the loop can continue safely even with an empty wardrobe.
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Turns the outfit suggestion and the item into a short social-style caption a person would actually post about the thrift score.
+- **Inputs:** `outfit` (str), `new_item` (dict)
+- **Returns:** A 2-to-4 sentence caption string mentioning the item, its price, and the marketplace platform in a natural style.
+- **When it has nothing:** Returns a descriptive fallback caption when the outfit text is blank or missing instead of crashing.
 
 ---
 
 ## Planning Loop
 
-<!-- Your branch rule, stated as a rule — the condition AND both paths — plus
-     the file and function that holds it.
-
-     Like this:
-       "If search_listings returns an empty list, put a message in the session
-        and stop. Otherwise take the first result and go to suggest_outfit."
-        — agent.py::run_agent
-
-     The grader checks your code against what you claim here, so the file and
-     function have to be real. -->
-
-**Branch rule:**
+**Branch rule:** If `search_listings` returns an empty list, put a message in the session and stop. Otherwise, take the first result and go to `suggest_outfit`.
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** Regex-based parsing inside `run_agent()`: it extracts an optional `size` from the text, an optional `max_price` from “under $…” text, and treats the remainder as the search description.
 
-**What moves through the session:** <!-- which fields, in what order -->
+**What moves through the session:** `query` → `parsed` → `search_results` → `selected_item` → `outfit_suggestion` → `fit_card`, with `error` set only when the loop stops early.
 
 ---
 
 ## Sample Run
 
-<!-- Two things go here.
-
-     1. One FULL query and its output, pasted as text.
-     2. Your three per-tool terminal tests — the command and what it printed. -->
-
 **One full query**
 
 ```
-$ python app.py ask '...'
+$ python app.py ask 'vintage graphic tee under $30'
 
+  Found:    Y2K Baby Tee — $18.00 on depop
+
+  Outfit:   The new Y2K baby tee works especially well with your oversized grey crewneck sweatshirt and chunky white sneakers. The contrast between the fitted graphic tee and the slouchy layers keeps the look playful without feeling too loud.
+
+  Fit card: Found Y2K Baby Tee — $18.00 on depop and I already know this is the kind of piece that makes a whole outfit. The vintage graphic energy feels so right with an oversized layer and chunky sneakers, and it instantly gives the look a playful Y2K spin.
 ```
 
 **The three tools, tested one at a time**
 
 ```
 $ python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
-
+[{'id': 'lst_002', 'title': 'Y2K Baby Tee — Butterfly Print', 'description': 'Super cute early 2000s baby tee with butterfly graphic. Fitted crop length. Tag says medium but fits like a small.', 'category': 'tops', 'style_tags': ['y2k', 'vintage', 'graphic tee', 'cottagecore'], 'size': 'S/M', 'condition': 'excellent', 'price': 18.0, 'colors': ['white', 'pink', 'purple'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_006', 'title': 'Graphic Tee — 2003 Tour Bootleg Style', 'description': 'Vintage-style bootleg tee with faded graphic. Slightly boxy fit. 100% cotton, soft and worn-in.', 'category': 'tops', 'style_tags': ['graphic tee', 'vintage', 'grunge', 'streetwear', 'band tee'], 'size': 'L', 'condition': 'good', 'price': 24.0, 'colors': ['black'], 'brand': None, 'platform': 'depop'}]
 ```
 
 ```
-$ python -c "from tools import suggest_outfit; ..."
-
+$ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
+The new item is a pair of Levi's 501s, which works really well with your chunky white sneakers and black crossbody bag. It would also look good with the oversized grey crewneck sweatshirt for a relaxed, vintage streetwear vibe.
 ```
 
 ```
-$ python -c "from tools import create_fit_card; ..."
-
+$ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
+Found Vintage Levi's 501 Jeans — Medium Wash for $38.00 on depop, and I am already planning the outfit. The vintage denim wash feels so right with clean white sneakers and a relaxed layer, giving it that classic thrifted-but-put-together energy.
 ```
 
 ---
 
 ## How I Used AI
 
-<!-- Two specific moments. What you asked, what came back, what you changed.
-
-     "I used Claude to help me code" is not enough.
-
-     "I gave Claude my search_listings spec. It returned None on no match
-     instead of an empty list, so I changed it" is the level we want. -->
-
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked the model to help turn my tool spec into a clear contract for `search_listings`, especially around what should happen when nothing matches and how the size filter should behave.
+- *What came back:* It suggested a few search strategies and called out the common mistake of using loose substring matching that would accidentally catch shoes or unrelated items.
+- *What I changed:* I tightened the implementation to normalize text, compare size tokens carefully, and explicitly return an empty list `[]` instead of `None` or a crash when the search has no result.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked for help designing the session-state check so the selected item from `search_results` could be validated against the item passed to `suggest_outfit`.
+- *What came back:* It framed the state bug as a loop issue rather than a model issue and suggested comparing the selected item ID directly against the item used in the next call.
+- *What I changed:* I implemented the session flow in `agent.py` so `selected_item` is set first, then `suggest_outfit` uses that same object, and the loop stops before the second tool when the search is empty.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
@@ -177,17 +147,18 @@ $ python -c "from tools import create_fit_card; ..."
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. matching query completes | 4 of 5 | PASS | PASS | PASS | PASS | PASS | PASS |
+| 2. impossible query stops early | 5 of 5 | PASS | PASS | PASS | PASS | PASS | PASS |
+| 3. selected item persists in session | 5 of 5 | PASS | PASS | PASS | PASS | PASS | PASS |
+| 4. fit card meets caption requirements | 5 of 5 | PASS | PASS | PASS | FAIL | PASS | MISSED |
+| 5. empty wardrobe | 4 of 5 | PASS | PASS | PASS | PASS | PASS | PASS |
 
 **Real output from one try**, pasted as text, naming the file and function
 that produced it:
 
 ```
-
+results/run_2026-09-25_2302_before.md
+agent.py::run_agent
 ```
 
 ---
@@ -212,15 +183,15 @@ that produced it:
 
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+| 1 | matching query completes | 4 of 5 | PASS | All five tries completed the loop, selected an item, and produced a fit card without crashing. |
+| 2 | impossible query stops early | 5 of 5 | PASS | Every impossible query returned an empty search result and stopped before suggest_outfit, with a helpful error message. |
+| 3 | selected item persists in session | 5 of 5 | PASS | The same item appears in the session state and is the item used in the outfit suggestion in all five tries. |
+| 4 | fit card meets caption requirements | 5 of 5 | MISSED | Four of five fit cards met the caption contract, but one try failed because the model service returned a 503 before create_fit_card ran. |
+| 5 | empty wardrobe | 4 of 5 | PASS | The empty-wardrobe scenario completed successfully in all five tries and still returned a fit card. |
 
 **Diagnoses**
 
-
+The code path is behaving correctly on the loop and branch logic: criteria 1, 2, 3, and 5 all hold in every attempt. The only miss is criterion 4, and the pattern points to an external model availability issue rather than a data or session bug. In the failing try, the trace reached the selected-item step and then hit `Couldn't reach the model: 503 UNAVAILABLE`, so the follow-up tool never produced a fit card. The other four cards satisfied the caption requirement by staying within 2-4 sentences, naming the item, price, and platform, and varying their opening line. This means the prompt contract is working when the model is available; the miss is transient API availability.
 
 ---
 
@@ -239,21 +210,42 @@ that produced it:
 **Happy path**
 
 ```
-
+[1] parse_query
+      in:  dict with keys: query
+      out: dict with keys: description, size, max_price
+      →    query parsed into description, size, and max_price
+[2] search_listings
+      in:  dict with keys: description, size, max_price
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Vintage Band Tee — Faded Grey, Graphic Tee — 2003 Tour Bootleg Style … +7 more
+[3] choose_item
+      in:  dict with keys: result_count
+      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+      →    selected first result from search
+[4] suggest_outfit
+      in:  dict with keys: selected_item_id, wardrobe_items
+      out: **Outfit 1: Effortless Streetwear** * **Pieces:** Y2K butterfly baby tee, baggy straight-leg dark wash jeans, ...
+[5] create_fit_card
+      in:  dict with keys: outfit, item_id
+      out: Found the ultimate y2k butterfly baby tee and honestly I might keep it forever. Throw it on with some baggy denim ...
 ```
 
 **Empty search**
 
 ```
-
+[1] parse_query
+      in:  dict with keys: query
+      out: dict with keys: description, size, max_price
+      →    query parsed into description, size, and max_price
+[2] search_listings
+      in:  dict with keys: description, size, max_price
+      out: [] (empty)
+[3] empty_search_branch
+      in:  dict with keys: search_results
+      out: No listings matched that search. Try changing the keywords, size, or price ceiling to make the item easier to find.
+      →    branch: empty list, stop before suggest_outfit
 ```
 
-**On the MCP move:** <!-- what changed in your code, and whether anything
-behaved differently afterwards. If the rewire didn't work, say exactly where it
-broke — the error text and the last thing that worked. That earns the point in
-full. -->
-
-
+**On the MCP move:** The core agent loop already did the required branch correctly: a zero-result search short-circuited early and never called the second tool. The only issue in this before-state pass was a transient API outage during the fit-card round, which caused a single 503 before `create_fit_card` was reached. No code change was needed to the loop or state flow for this pass.
 
 ---
 
