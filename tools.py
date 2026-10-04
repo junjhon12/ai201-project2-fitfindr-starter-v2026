@@ -193,6 +193,8 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     prompt = (
         f"Write a 2-to-4 sentence social caption about this thrift find: "
         f"{item_title}, priced at ${item_price}, sold on {item_platform}. "
+        f"Include the complete item title exactly as written: '{item_title}'. "
+        "Do not shorten, replace, or paraphrase the title. "
         f"The suggested outfit is: {outfit_text}. "
         f"Make it sound like a real thrift post, not a product listing. "
         f"Mention the vibe as '{item_tags}' and keep it punchy, specific, and easy to read."

@@ -364,26 +364,75 @@ Command: `python app.py ask 'vintage graphic tee under $30' --trace`
 
 ## The Improvement
 
-<!-- What you changed, why your diagnosis pointed at it, and the after-run in
-     the same table format. One change, measured properly.
+**What I changed:** In `tools.py::create_fit_card`, I added one instruction to
+the caption prompt: include the complete listing title exactly as written and
+do not shorten, replace, or paraphrase it. I changed no other behavior,
+settings, or evaluation criteria.
 
-     `python run_eval.py --label after` -->
-
-**What I changed:**
-
-**Which failure it was meant to fix:**
+**Which failure it was meant to fix:** The diagnosis traced Criterion 4 misses
+to captions replacing distinctive item names with generic descriptions (for
+example, calling Platform Mary Janes “chunky patent platforms”). The prompt
+already supplied the title but did not require the model to preserve it.
 
 ### Run Log — After
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. matching query completes | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. impossible query stops early | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. selected item persists in session | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. fit card meets caption requirements | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. empty wardrobe | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
-**Did it help, and how do I know:**
+### Before/After Comparison
+
+| Criterion | Before | After |
+|---|---|---|
+| 1. matching query completes | MET (5/5) | MET (5/5) |
+| 2. impossible query stops early | MET (5/5) | MET (5/5) |
+| 3. selected item persists in session | MET (5/5) | MET (5/5) |
+| 4. fit card meets caption requirements | MISSED (1/5) | MET (5/5) |
+| 5. empty wardrobe | MET (5/5) | MET (5/5) |
+
+The [before run log](results/run_2026-10-04_0425_before.md) and
+[after run log](results/run_2026-10-04_0439_after.md) contain the recorded
+outputs. Both runs used five tries per scenario, caching off, and temperature
+0.9. The after run covered the same nine scenarios: 40 runs completed and all
+five impossible-search runs stopped before the later tools; no run crashed.
+
+For Criterion 4, each Try column is one batch across the same five different
+items. I checked all 25 after-run captions: each had 2–4 sentences, mentioned
+the item's distinguishing title words, price, and platform, and had an opening
+sentence different from the other four items in its batch. One silk-dress
+caption lowercased the title words, despite the prompt's exact-title
+instruction; the full identifying words were present and the written
+criterion asks that the title be mentioned, not that its capitalization
+match.
+
+**Sample raw output — Try 1, five different items**
+
+```
+90s Silk Slip Dress — Floral, Midi Length:
+Still pinching myself over finding this dreamy 90s Silk Slip Dress — Floral, Midi Length while digging through the racks this weekend. The vibe is totally '90s, vintage, feminine, and it looks so good dressed down with a chunky sweatshirt and beat-up boots. Grab it on depop now for just $30 before I change my mind and keep it!
+
+Platform Mary Janes — Black Patent:
+Obsessed with these Platform Mary Janes — Black Patent that I just listed for $55.0 over on depop! They give off the ultimate y2k, goth, platform energy and look so good dressed down with baggy denim or paired with wide-leg trousers. Grab them before I change my mind and keep them for myself!
+
+Corduroy Wide-Leg Pants — Rust:
+Obsessed with the vintage, cottagecore, 70s energy of these Corduroy Wide-Leg Pants — Rust. They’re giving major retro warmth and look so good styled with a chunky sweater or a little white tank. Grab them on depop for just $32.0 before I change my mind and keep them!
+
+Leather Belt — Brown, Braided:
+Just scored this vintage, western, classic Leather Belt — Brown, Braided on thredUp for $12.0! It’s the ultimate piece for breaking up a neutral fit or adding texture to your favorite baggy denim. Grab it before I change my mind and keep it for myself!
+
+Vintage Windbreaker — Color Block Purple/Teal:
+Obsessed with the 90s, vintage, athletic energy of this color block find. I just threw on the Vintage Windbreaker — Color Block Purple/Teal with some baggy jeans and a white tank, and honestly, it does all the work. Snagged it on thredUp for just $40.0 and I’m never taking it off.
+```
+
+**Did it help, and how do I know:** Yes, by the measured rubric: Criterion 4
+went from 1/5 passing batches to 5/5, while the other four criteria stayed at
+5/5. The full after-run report records every try; the title's capitalization
+was not perfectly reliable in one caption, so the prompt instruction is not a
+hard guarantee.
 
 <!-- If it made things worse, say that. Honestly reported, that earns full
      credit and is more interesting than one that worked. -->
@@ -394,11 +443,11 @@ Command: `python app.py ask 'vintage graphic tee under $30' --trace`
 
 ## What's Still Broken
 
-<!-- For each criterion still missed: what you'd do, and why you stopped where
-     you did. "I ran out of time" is fine if it's true. Pretending nothing is
-     left is not. -->
-
-
+The prompt does not guarantee exact title capitalization: one after-run
+silk-dress caption lowercased the title words even though it included the
+complete identifying phrase. It passed the written mention requirement, but
+strict text-for-text title preservation would need validation beyond this
+single prompt change.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
