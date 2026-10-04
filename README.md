@@ -214,7 +214,7 @@ The code path is behaving correctly on the loop and branch logic: criteria 1, 2,
       in:  dict with keys: query
       out: dict with keys: description, size, max_price
       →    query parsed into description, size, and max_price
-[2] search_listings
+[2] search_listings (via MCP)
       in:  dict with keys: description, size, max_price
       out: 10 items: Y2K Baby Tee — Butterfly Print, Vintage Band Tee — Faded Grey, Graphic Tee — 2003 Tour Bootleg Style … +7 more
 [3] choose_item
@@ -223,10 +223,10 @@ The code path is behaving correctly on the loop and branch logic: criteria 1, 2,
       →    selected first result from search
 [4] suggest_outfit
       in:  dict with keys: selected_item_id, wardrobe_items
-      out: **Outfit 1: Effortless Streetwear** * **Pieces:** Y2K butterfly baby tee, baggy straight-leg dark wash jeans, ...
+      out: **Outfit 1: Effortless Streetwear** *   **Pieces:** Y2K butterfly baby tee, baggy straight-leg dark wash jeans…
 [5] create_fit_card
       in:  dict with keys: outfit, item_id
-      out: Found the ultimate y2k butterfly baby tee and honestly I might keep it forever. Throw it on with some baggy denim ...
+      out: Found the ultimate y2k butterfly baby tee and I am never taking it off. It’s giving major vintage graphic tee …
 ```
 
 **Empty search**
@@ -236,7 +236,7 @@ The code path is behaving correctly on the loop and branch logic: criteria 1, 2,
       in:  dict with keys: query
       out: dict with keys: description, size, max_price
       →    query parsed into description, size, and max_price
-[2] search_listings
+[2] search_listings (via MCP)
       in:  dict with keys: description, size, max_price
       out: [] (empty)
 [3] empty_search_branch
@@ -245,7 +245,7 @@ The code path is behaving correctly on the loop and branch logic: criteria 1, 2,
       →    branch: empty list, stop before suggest_outfit
 ```
 
-**On the MCP move:** The core agent loop already did the required branch correctly: a zero-result search short-circuited early and never called the second tool. The only issue in this before-state pass was a transient API outage during the fit-card round, which caused a single 503 before `create_fit_card` was reached. No code change was needed to the loop or state flow for this pass.
+**On the MCP move:** `mcp_server.py::search_listings` now registers the existing search implementation with typed `description`, `size`, and `max_price` inputs. `agent.py::run_agent` calls it through `mcp_client.call_tool`; the MCP client unwraps the result back into a list of listing dictionaries, so the existing empty-search branch and the rest of the loop keep the same result shape. `python mcp_client.py` lists the registered tool, and a direct-vs-MCP comparison returned equal lists. A traced `vintage graphic tee under $30` query completed with Y2K Baby Tee selected, and the impossible-search query still stopped before `suggest_outfit`. The loop trace labels the MCP call `search_listings (via MCP)`.
 
 ---
 
