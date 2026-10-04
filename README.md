@@ -261,15 +261,22 @@ Vibe: denim, vintage, classic.
 The loop, empty-search branch, state handoff, and empty-wardrobe path all met
 their targets. The only miss was in model-generated fit-card content, not
 availability: all 45 agent runs completed or took the expected empty-search
-branch, with no crashes. Across criterion 4, every caption had 2–4 sentences,
-the platform was named, and the five openings differed in every batch.
-However, at least one caption in four of the five batches omitted either a
-clear item-identifying phrase or the matching numeric price. The
-`create_fit_card` prompt in `tools.py` supplies the title and price, but it
-asks for a punchy post “not a product listing” and does not explicitly require
-the item title in the system instruction. The model sometimes prioritizes
-that style direction and leaves out identifying words or the price; this is
-an output-contract weakness, not a search or loop failure.
+branch, with no crashes. Criterion 4 passed only in Try 4 (1/5, against its
+5/5 target), so it was MISSED. In the four failed batches, the recurring
+failure was item identification: for example, Try 1 called the platform shoes
+“chunky patent platforms” rather than Platform Mary Janes, and described the
+belt as a “perfect vintage western belt” rather than the brown braided leather
+belt. The outputs in all five batches had 2–4 sentences, included the numeric
+price and platform, and used different opening sentences, so those were not
+the cause of the misses.
+
+The failure occurred at the `create_fit_card` step in `tools.py`: the model
+generated the caption but paraphrased away distinguishing words from the
+item title. The prompt supplies the title, but asks for a punchy post “not a
+product listing”; the system instruction explicitly requires price and
+platform, but not the item title. That style-versus-identification prompt
+mechanism explains the misses. Search, tool availability, and the loop branch
+worked; this is an output-contract weakness.
 
 ---
 
