@@ -139,6 +139,12 @@ def run_agent(query: str, wardrobe: dict) -> dict:
             outfit = suggest_outfit(selected_item, wardrobe)
         except ModelUnavailable as exc:
             session["error"] = str(exc)
+            trace.step(
+                "suggest_outfit",
+                inputs={"selected_item_id": selected_item.get("id"), "wardrobe_items": len(wardrobe.get("items", []))},
+                returned=session["error"],
+                note="model unavailable",
+            )
             return session
         session["outfit_suggestion"] = outfit
         trace.step(
@@ -151,6 +157,12 @@ def run_agent(query: str, wardrobe: dict) -> dict:
             card = create_fit_card(outfit, selected_item)
         except ModelUnavailable as exc:
             session["error"] = str(exc)
+            trace.step(
+                "create_fit_card",
+                inputs={"outfit": outfit, "item_id": selected_item.get("id")},
+                returned=session["error"],
+                note="model unavailable",
+            )
             return session
         session["fit_card"] = card
         trace.step(

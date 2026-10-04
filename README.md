@@ -195,6 +195,32 @@ The code path is behaving correctly on the loop and branch logic: criteria 1, 2,
 
 ---
 
+## Milestone 2 Failure Runs
+
+**Empty search** — `python app.py ask 'nonexistent moon colony artifact' --trace`
+
+```
+No listings matched that search. Try changing the keywords, size, or price ceiling to make the item easier to find.
+```
+
+**Empty wardrobe** — `python app.py ask 'vintage graphic tee under $30' --empty-wardrobe`
+
+The agent completed instead of crashing or returning blank advice:
+
+```
+What a fun find! At $18, that butterfly baby tee is peak 2000s nostalgia. Since the top is fitted and cropped, the key to making it look modern and wearable for everyday life is balancing proportions and keeping the rest of the outfit grounded.
+
+Here are two easy, practical ways to style it using common wardrobe staples:
+```
+
+The response continued with two practical outfit ideas and ended: “Stylist Tip: Don't stress about over-accessorizing. Let the butterfly print be the star of the show by keeping your other pieces solid-colored and classic!” The run also returned a non-empty fit-card caption.
+
+**Model unavailable** — changed one character of the `.env` key for a fresh query with the cache disabled; the original `.env` was restored afterward.
+
+```
+The model rejected your API key. Check GEMINI_API_KEY in your .env file, or create a fresh key at aistudio.google.com.
+```
+
 ## Loop Trace
 
 <!-- One full run, printed step by step, with the MCP call visible in it.
@@ -208,6 +234,8 @@ The code path is behaving correctly on the loop and branch logic: criteria 1, 2,
      anyone will ever find that out. -->
 
 **Happy path**
+
+Command: `python app.py ask 'vintage graphic tee under $30' --trace`
 
 ```
 [1] parse_query

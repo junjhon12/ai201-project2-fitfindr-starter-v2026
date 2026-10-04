@@ -29,13 +29,16 @@ import config
 
 _lines: list[str] = []
 _step_number = 0
+_print_steps = True
 
 
-def start_trace() -> None:
-    """Clear the trace. Call this at the start of each run."""
-    global _step_number
+def start_trace(print_steps: bool | None = None) -> None:
+    """Clear the trace and optionally enable printing its steps."""
+    global _step_number, _print_steps
     _lines.clear()
     _step_number = 0
+    if print_steps is not None:
+        _print_steps = print_steps
 
 
 def step(name: str, inputs=None, returned=None, note: str = "") -> None:
@@ -61,7 +64,8 @@ def step(name: str, inputs=None, returned=None, note: str = "") -> None:
         line += f"\n      →    {note}"
 
     _lines.append(line)
-    print(line, flush=True)
+    if _print_steps:
+        print(line, flush=True)
 
 
 def get_trace() -> str:
