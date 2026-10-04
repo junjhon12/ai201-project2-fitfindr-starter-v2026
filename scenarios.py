@@ -9,8 +9,8 @@ and this file is where you write it down.
 `run_eval.py` runs everything here five times and writes the run log — five
 because your criteria are written out of five.
 
-Three scenarios are filled in to show the shape. Add or change whatever your
-own criteria need — these are a starting point, not a fixed set.
+The starter's first three scenarios show the shape. Add or change whatever
+your criteria need — these are a starting point, not a fixed set.
 """
 
 SCENARIOS = [
@@ -37,10 +37,34 @@ SCENARIOS = [
         "criterion": 3,
     },
     {
-        # Fit-card check: a model-generated caption must still mention the same
-        # item information and be a proper caption rather than a template.
+        # Fit-card check: use five different matched items and repeat each
+        # query five times to check both item details and variation.
         "name": "fit card meets caption requirements",
         "query": "silk slip dress in midi length under $40",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        "name": "fit card for platform shoes",
+        "query": "black patent platform Mary Janes size 7",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        "name": "fit card for corduroy pants",
+        "query": "rust corduroy wide-leg pants size W28",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        "name": "fit card for braided leather belt",
+        "query": "brown braided leather belt",
+        "wardrobe": "example",
+        "criterion": 4,
+    },
+    {
+        "name": "fit card for vintage windbreaker",
+        "query": "purple teal 90s vintage windbreaker",
         "wardrobe": "example",
         "criterion": 4,
     },

@@ -136,62 +136,140 @@ Found Vintage Levi's 501 Jeans — Medium Wash for $38.00 on depop, and I am alr
 
 ## Run Log — Before
 
-<!-- Five criteria, five tries each, in this exact format.
-
-     Five, because your criteria are written out of five. Mark each try PASS
-     or FAIL, count the passes, and read that count against your target — a
-     row targeting 4 of 5 with three PASS cells is MISSED (3/5).
-
-     `python run_eval.py --label before` runs everything and writes the table
-     into results/. Paste it here and fill in the verdicts. -->
-
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1. matching query completes | 4 of 5 | PASS | PASS | PASS | PASS | PASS | PASS |
-| 2. impossible query stops early | 5 of 5 | PASS | PASS | PASS | PASS | PASS | PASS |
-| 3. selected item persists in session | 5 of 5 | PASS | PASS | PASS | PASS | PASS | PASS |
-| 4. fit card meets caption requirements | 5 of 5 | PASS | PASS | PASS | FAIL | PASS | MISSED |
-| 5. empty wardrobe | 4 of 5 | PASS | PASS | PASS | PASS | PASS | PASS |
+| 1. matching query completes | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. impossible query stops early | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. selected item persists in session | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4. fit card meets caption requirements | 5 of 5 | FAIL | FAIL | FAIL | PASS | FAIL | MISSED (1/5) |
+| 5. empty wardrobe | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
-**Real output from one try**, pasted as text, naming the file and function
-that produced it:
+**Run details:** `python run_eval.py --label before`; 9 scenarios ran five
+times apiece, with caching off and temperature 0.9 (80 model calls). Criterion 4 uses five
+different matched items. For each Try column, I checked the corresponding
+attempt for all five items as one batch; a batch passes only if all five cards
+meet the sentence, item-name, price, and platform requirements and all five
+opening sentences differ. This also repeats each item five times to check
+variation. The generated run log is
+[`results/run_2026-10-04_0425_before.md`](results/run_2026-10-04_0425_before.md),
+produced by `run_eval.py::write_report` from records captured by
+`run_eval.py::run_once` and `agent.py::run_agent`.
+
+### Criterion 1 — matching query completes
+
+Source: [`results/run_2026-10-04_0425_before.md`](results/run_2026-10-04_0425_before.md),
+`agent.py::run_agent`, matching-query Try 1:
 
 ```
-results/run_2026-09-25_2302_before.md
-agent.py::run_agent
+selected_item: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+search_results: 10
+
+Fit card:
+Found the ultimate Y2K baby tee with the cutest butterfly print, and I am obsessed. Style it baggy with dark denim and combat boots for that effortless grunge look, or tuck it into wide-leg khakis with fresh sneakers. Grab this vintage graphic tee on Depop right now for just $18!
+```
+
+### Criterion 2 — impossible query stops early
+
+Source: [`results/run_2026-10-04_0425_before.md`](results/run_2026-10-04_0425_before.md),
+`agent.py::run_agent`, impossible-query Try 1:
+
+```
+[1] parse_query
+      in:  dict with keys: query
+      out: dict with keys: description, size, max_price
+      →    query parsed into description, size, and max_price
+[2] search_listings (via MCP)
+      in:  dict with keys: description, size, max_price
+      out: [] (empty)
+[3] empty_search_branch
+      in:  dict with keys: search_results
+      out: No listings matched that search. Try changing the keywords, size, or price ceiling to make the item easier to …
+      →    branch: empty list, stop before suggest_outfit
+```
+
+### Criterion 3 — selected item persists in session
+
+The evaluation report records the selected track jacket in the returned
+session. I also instrumented `suggest_outfit` in memory (leaving search and
+`agent.py::run_agent` unchanged) to print both IDs on five additional
+state-only checks:
+
+```
+Try 1: session selected_item.id=lst_004; suggest_outfit new_item.id=lst_004; PASS
+Try 2: session selected_item.id=lst_004; suggest_outfit new_item.id=lst_004; PASS
+Try 3: session selected_item.id=lst_004; suggest_outfit new_item.id=lst_004; PASS
+Try 4: session selected_item.id=lst_004; suggest_outfit new_item.id=lst_004; PASS
+Try 5: session selected_item.id=lst_004; suggest_outfit new_item.id=lst_004; PASS
+```
+
+The five model-backed evaluation runs are in
+[`results/run_2026-10-04_0425_before.md`](results/run_2026-10-04_0425_before.md),
+under `agent.py::run_agent`, “selected item persists in session.”
+
+### Criterion 4 — fit card meets caption requirements
+
+Source for all five outputs: [`results/run_2026-10-04_0425_before.md`](results/run_2026-10-04_0425_before.md),
+`agent.py::run_agent`, Try 4 across the five criterion-4 scenarios. This was
+the one batch in which all five cards passed; their opening sentences differ.
+
+```
+90s Silk Slip Dress — Floral, Midi Length ($30.0, depop)
+Just scored the ultimate 90s floral silk slip dress and I'm obsessed with this vintage vibe. Throw an oversized grey crewneck and combat boots over it for a grunge look, or style it with a cropped zip hoodie and chunky sneakers for pure 90s street style. Grab this dreamy piece now on Depop for just $30 before I keep it for myself!
+
+Platform Mary Janes — Black Patent ($55.0, depop)
+Obsessed with these glossy black platform Mary Janes—such a good y2k, goth, platform score. Style them with baggy denim and a cropped zip hoodie for a street look, or lean into prep-punk contrast with khaki trousers and a vintage jacket. Grab them on Depop for $55 before I change my mind and keep them.
+
+Corduroy Wide-Leg Pants — Rust ($32.0, depop)
+Nothing beats finding the ultimate pair of 70s-vibed corduroy pants while sifting through the racks. This vintage rust pair gives off major cottagecore energy and looks so good styled with an oversized grey sweatshirt or a cropped hoodie. Grab them on Depop for just $32.0 before someone else snags your new go-to fall bottoms!
+
+Leather Belt — Brown, Braided ($12.0, thredUp)
+Found this gorgeous brown braided leather belt on thredUp for just $12.00, and it’s giving major vintage, western, classic vibes. It adds the absolute best texture whether I'm styling it with baggy jeans or wide-leg khakis. Such an easy little detail that pulls every look together!
+
+Vintage Windbreaker — Color Block Purple/Teal ($40.0, thredUp)
+I am obsessed with the purple and teal color-blocking on this vintage windbreaker—total '90s athletic energy. I threw it on with baggy denim and chunky sneakers for the ultimate retro streetwear vibe. Snagged this gem on thredUp for just $40!
+```
+
+### Criterion 5 — empty wardrobe
+
+Source: [`results/run_2026-10-04_0425_before.md`](results/run_2026-10-04_0425_before.md),
+`agent.py::run_agent`, empty-wardrobe Try 1:
+
+```
+selected_item: Denim Jacket — Light Wash, Cropped ($42.0, poshmark)
+stopped early: no
+
+Fit card:
+The ultimate transitional piece has officially entered the chat! This cropped light wash denim jacket adds instant vintage charm and looks so good thrown over a slip dress or paired with stripes. Grab it over on my Poshmark closet for just $42.00.
+
+Vibe: denim, vintage, classic.
 ```
 
 ---
 
 ## Verdicts and Diagnoses
 
-<!-- MET or MISSED per criterion against LAST UNIT's target, plus a sentence on
-     how you decided.
-
-     Then, for every miss: which of the four places it happened — a tool, the
-     loop's branch, the session, or the model's output — AND the mechanism.
-
-     Not a diagnosis:  "The fit card was bad."
-     A diagnosis:      "The fit card criterion missed on 2 of 5 items. Both had
-                        an empty brand field. My prompt puts the brand in the
-                        first sentence, so the card opened with a blank and read
-                        like a fragment. The tool worked; the prompt assumed a
-                        field that isn't always there."
-
-     Look for a pattern. Three misses on the same tool is one problem, not
-     three. -->
-
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 | matching query completes | 4 of 5 | PASS | All five tries completed the loop, selected an item, and produced a fit card without crashing. |
-| 2 | impossible query stops early | 5 of 5 | PASS | Every impossible query returned an empty search result and stopped before suggest_outfit, with a helpful error message. |
-| 3 | selected item persists in session | 5 of 5 | PASS | The same item appears in the session state and is the item used in the outfit suggestion in all five tries. |
-| 4 | fit card meets caption requirements | 5 of 5 | MISSED | Four of five fit cards met the caption contract, but one try failed because the model service returned a 503 before create_fit_card ran. |
-| 5 | empty wardrobe | 4 of 5 | PASS | The empty-wardrobe scenario completed successfully in all five tries and still returned a fit card. |
+| 1 | matching query completes | 4 of 5 | MET (5/5) | Every try selected a listing and completed both later tools with a non-empty fit card. |
+| 2 | impossible query stops early | 5 of 5 | MET (5/5) | Every try returned no search results, a message about changing the query, and no outfit/card step. |
+| 3 | selected item persists in session | 5 of 5 | MET (5/5) | The five evaluation runs completed; a separate five-run state probe recorded matching `lst_004` IDs in session and the outfit-tool argument. |
+| 4 | fit card meets caption requirements | 5 of 5 | MISSED (1/5) | Only batch 4 of 5 passed across the five distinct items. Sentence counts and opening variation passed, but some cards in the other batches missed an item-identifying phrase or the item's price. |
+| 5 | empty wardrobe | 4 of 5 | MET (5/5) | Each empty-wardrobe run completed without error and returned a fit card. |
 
 **Diagnoses**
 
-The code path is behaving correctly on the loop and branch logic: criteria 1, 2, 3, and 5 all hold in every attempt. The only miss is criterion 4, and the pattern points to an external model availability issue rather than a data or session bug. In the failing try, the trace reached the selected-item step and then hit `Couldn't reach the model: 503 UNAVAILABLE`, so the follow-up tool never produced a fit card. The other four cards satisfied the caption requirement by staying within 2-4 sentences, naming the item, price, and platform, and varying their opening line. This means the prompt contract is working when the model is available; the miss is transient API availability.
+The loop, empty-search branch, state handoff, and empty-wardrobe path all met
+their targets. The only miss was in model-generated fit-card content, not
+availability: all 45 agent runs completed or took the expected empty-search
+branch, with no crashes. Across criterion 4, every caption had 2–4 sentences,
+the platform was named, and the five openings differed in every batch.
+However, at least one caption in four of the five batches omitted either a
+clear item-identifying phrase or the matching numeric price. The
+`create_fit_card` prompt in `tools.py` supplies the title and price, but it
+asks for a punchy post “not a product listing” and does not explicitly require
+the item title in the system instruction. The model sometimes prioritizes
+that style direction and leaves out identifying words or the price; this is
+an output-contract weakness, not a search or loop failure.
 
 ---
 
