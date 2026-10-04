@@ -127,6 +127,12 @@ Found Vintage Levi's 501 Jeans — Medium Wash for $38.00 on depop, and I am alr
 - *What came back:* It framed the state bug as a loop issue rather than a model issue and suggested comparing the selected item ID directly against the item used in the next call.
 - *What I changed:* I implemented the session flow in `agent.py` so `selected_item` is set first, then `suggest_outfit` uses that same object, and the loop stops before the second tool when the search is empty.
 
+**Moment 3 — Unit 4**
+
+- *What I asked for:* I used AI to help compare the before-run captions with Criterion 4 and find the common failure mechanism, then to suggest a small prompt change rather than changing the scoring rule.
+- *What came back:* The diagnosis pointed to `create_fit_card` paraphrasing distinguishing words from the listing title even though the title was already provided to the model.
+- *What I changed:* I added a prompt instruction in `tools.py` to preserve the full listing title, then reran the five-scenario evaluation and checked the resulting captions against the existing criterion. Criterion 4 improved from 1/5 passing batches to 5/5; I also recorded the remaining capitalization inconsistency rather than counting it as a rubric failure.
+
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
      Don't fill these in during unit 3.
@@ -358,7 +364,7 @@ Command: `python app.py ask 'vintage graphic tee under $30' --trace`
       →    branch: empty list, stop before suggest_outfit
 ```
 
-**On the MCP move:** `mcp_server.py::search_listings` now registers the existing search implementation with typed `description`, `size`, and `max_price` inputs. `agent.py::run_agent` calls it through `mcp_client.call_tool`; the MCP client unwraps the result back into a list of listing dictionaries, so the existing empty-search branch and the rest of the loop keep the same result shape. `python mcp_client.py` lists the registered tool, and a direct-vs-MCP comparison returned equal lists. A traced `vintage graphic tee under $30` query completed with Y2K Baby Tee selected, and the impossible-search query still stopped before `suggest_outfit`. The loop trace labels the MCP call `search_listings (via MCP)`.
+**On the MCP move:** `mcp_server.py::search_listings` now registers the existing search implementation with typed `description`, `size`, and `max_price` inputs. `agent.py::run_agent` calls it through `mcp_client.call_tool`; the MCP client unwraps the result back into a list of listing dictionaries, so the existing empty-search branch and the rest of the loop keep the same result shape. `python mcp_client.py` lists the registered tool, and a direct-vs-MCP comparison returned equal lists. A traced `vintage graphic tee under $30` query completed with Y2K Baby Tee selected, and the impossible-search query still stopped before `suggest_outfit`. The loop trace labels the MCP call `search_listings (via MCP)`. I observed no user-visible behavior change after the move: successful searches still continue through the loop, and empty searches still stop before `suggest_outfit`.
 
 ---
 
@@ -443,11 +449,22 @@ hard guarantee.
 
 ## What's Still Broken
 
-The prompt does not guarantee exact title capitalization: one after-run
-silk-dress caption lowercased the title words even though it included the
-complete identifying phrase. It passed the written mention requirement, but
-strict text-for-text title preservation would need validation beyond this
-single prompt change.
+No acceptance criterion remains missed after the improvement: Criteria 1, 2,
+3, and 5 met their targets before the change, and Criterion 4 moved from
+MISSED (1/5) to MET (5/5) in the after run. The remaining weakness is narrower
+than the written Criterion 4: the prompt does not guarantee exact title
+capitalization. One after-run silk-dress caption lowercased the title words
+while retaining the complete identifying phrase, so it still met the
+criterion's title-mention requirement.
+
+If I continued, I would validate the generated caption against the exact
+listing title and retry or repair it when the title is missing or altered.
+I stopped at the prompt change because it met the measured 5/5 target, while
+exact capitalization is not required by the criterion and would need a
+separate validation behavior and its own tests. I have not treated that
+remaining consistency issue as a criterion failure.
+
+**Repository URL to submit again:** https://github.com/junjhon12/ai201-project2-fitfindr-starter-v2026
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
